@@ -83,7 +83,7 @@ if (params.pbrun_mode) {
 
 ch_reps = Channel.from(1..params.reps)
 
-    process gpu_mode {
+    process pbrun_mode {
         tag "cpus: ${task.cpus},mem: ${task.memory} | rep: ${rep}"
         label 'pbrun'
         publishDir "${params.outdir}/pbrun/task_${rep}/", mode: "copy"
