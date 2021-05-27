@@ -77,3 +77,29 @@ ch_reps = Channel.from(1..params.reps)
         """
     }
 }
+
+
+if (params.pbrun_mode) {
+
+ch_reps = Channel.from(1..params.reps)
+
+    process gpu_mode {
+        tag "cpus: ${task.cpus},mem: ${task.memory} | rep: ${rep}"
+        label 'pbrun'
+        publishDir "${params.outdir}/pbrun/task_${rep}/", mode: "copy"
+
+        input:
+        val(rep) from ch_reps
+
+        output:
+        file("*") optional true
+
+        script:
+        """
+        cat .command.run > command.run
+        echo "executor : ${params.executor}"
+        echo "rep: ${rep}"
+        ${params.script}
+        """
+    }
+}
