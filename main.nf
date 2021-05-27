@@ -20,38 +20,38 @@ if(params.config == 'conf/google.config') log.info "network\t\t : ${params.netwo
 if(params.config == 'conf/google.config') log.info "subnetwork\t : ${params.subnetwork}"
 log.info ""
 
-if (!params.gpu_mode) {
+if (!params.pbrun_mode) {
+    if (!params.gpu_mode) {
+        ch_reps = Channel.from(1..params.reps)
+        process with_cpus {
+            tag "cpus: ${task.cpus},mem: ${task.memory} | rep: ${rep}, ${task.container}"
+            label 'with_cpus'
+            publishDir "${params.outdir}/cpu_mode/task_${rep}/", mode: "copy"
 
-ch_reps = Channel.from(1..params.reps)
+            input:
+            val(rep) from ch_reps
 
-    process with_cpus {
-        tag "cpus: ${task.cpus},mem: ${task.memory} | rep: ${rep}, ${task.container}"
-        label 'with_cpus'
-        publishDir "${params.outdir}/cpu_mode/task_${rep}/", mode: "copy"
+            output:
+            file("cpu_compute_metadata.json") optional true into my_output_files
+            file("*") optional true
 
-        input:
-        val(rep) from ch_reps
-
-        output:
-        file("cpu_compute_metadata.json") optional true into my_output_files
-        file("*") optional true
-
-        script:
-        if ( params.executor == 'google-lifesciences' )
-        """
-        echo "executor : ${params.executor}"
-        echo "rep: ${rep}"
-        curl "http://169.254.169.254/computeMetadata/v1/?recursive=true&alt=json" -H "Metadata-Flavor: Google" > "${rep}_cpu_compute_metadata.json"
-        """
-        else
-        """
-        cat .command.run > command.run
-        echo "executor : ${params.executor}"
-        echo "rep: ${rep}"
-        ${params.script}
-        """
-    }
-}
+            script:
+            if ( params.executor == 'google-lifesciences' )
+            """
+            echo "executor : ${params.executor}"
+            echo "rep: ${rep}"
+            curl "http://169.254.169.254/computeMetadata/v1/?recursive=true&alt=json" -H "Metadata-Flavor: Google" > "${rep}_cpu_compute_metadata.json"
+            """
+            else
+            """
+            cat .command.run > command.run
+            echo "executor : ${params.executor}"
+            echo "rep: ${rep}"
+            ${params.script}
+            """
+        }
+     }
+  }
 
 if (params.gpu_mode) {
 
